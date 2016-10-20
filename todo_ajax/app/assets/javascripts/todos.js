@@ -1,8 +1,28 @@
 // Place all the behaviors and hooks related to the matching controller here.
 // All this logic will automatically be available in application.js.
 function toggleDone() {
-  $(this).parent().parent().toggleClass("success");
-  updateCounters();
+  var checkbox = this;
+  var tableRow = $(this).parent().parent();
+
+  var todoId = tableRow.data('id');
+  var isCompleted = !tableRow.hasClass("success");
+
+  $.ajax({
+    type: "PUT",
+    url: "/todos/" + todoId + ".json",
+    data: JSON.stringify({
+      todo: { completed: isCompleted }
+    }),
+    contentType: "application/json",
+    dataType: "json"})
+
+    .done(function(data) {
+      console.log(data);
+
+      tableRow.toggleClass("success", data.completed);
+
+      updateCounters();
+    });
 }
 
 function updateCounters() {
