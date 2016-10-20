@@ -11,32 +11,67 @@ function updateCounters() {
   $("#todo-count").html($(".todo").size() - $(".success").size());
 }
 
-function nextTodoId() {
-  return $(".todo").size() + 1;
+function createTodo(title) {
+  var newTodo = { title: title, completed: false };
+
+  $.ajax({
+    type: "POST",
+    url: "/todos.json",
+    data: JSON.stringify({
+      todo: newTodo
+    }),
+    contentType: "application/json",
+    dataType: "json"
+  })
+  .done(function(data) {
+    console.log(data);
+
+    var checkboxId = data.id;
+
+    var label = $('<label></label>')
+      .attr('for', checkboxId)
+      .html(title);
+
+    var checkbox = $('<input type="checkbox" value="1" />')
+      .attr('id', checkboxId)
+      .bind('change', toggleDone);
+
+    var tableRow = $('<tr class="todo"></td>')
+      .attr('data-id', checkboxId)
+      .append($('<td>').append(checkbox))
+      .append($('<td>').append(label));
+
+    $("#todoList").append(tableRow);
+
+    updateCounters();
+  })
+
+  .fail(function(error) {
+    console.log(error)
+    error_message = error.responseJSON.title[0];
+    showError(error_message);
+  });
 }
 
-function createTodo(title) {
-  var checkboxId = "todo-" + nextTodoId();
+function showError(message) {
+  $("#todo_title").parent().addClass("has-error");
 
-  var label = $('<label></label>')
-    .attr('for', checkboxId)
-    .html(title);
+  var errorElement = $("<span></span>")
+    .attr('id', 'error_message')
+    .addClass('help-block')
+    .html(message);
 
-  var checkbox = $('<input type="checkbox" value="1" />')
-    .attr('id', checkboxId)
-    .bind('change', toggleDone);
+  $(errorElement).appendTo('.form-group')
+}
 
-  var tableRow = $('<tr class="todo"></td>')
-    .append($('<td>').append(checkbox))
-    .append($('<td>').append(label));
-
-  $("#todoList").append( tableRow );
-
-  updateCounters();
+function resetErrors() {
+  $("#error_message").remove();
+  $("#todo_title").removeClass("error");
 }
 
 function submitTodo(event) {
   event.preventDefault();
+  resetErrors();
   createTodo($("#todo_title").val());
   $("#todo_title").val(null);
   updateCounters();
